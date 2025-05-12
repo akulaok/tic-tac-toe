@@ -77,15 +77,17 @@ export function useGameLogic() {
         setIsComputerThinking(false);
         return;
       }
-
-      const blockingMove = findWinningMove(PLAYER_SYMBOL);
-      if (blockingMove !== null) {
-        const newBoard = makeMove(blockingMove, COMPUTER_SYMBOL);
-        if (!checkGameResult(newBoard)) {
-          setIsXNext(true);
+      const isBlock = Math.random() < 0.7;
+      if (isBlock) {
+        const blockingMove = findWinningMove(PLAYER_SYMBOL);
+        if (blockingMove !== null) {
+          const newBoard = makeMove(blockingMove, COMPUTER_SYMBOL);
+          if (!checkGameResult(newBoard)) {
+            setIsXNext(true);
+          }
+          setIsComputerThinking(false);
+          return;
         }
-        setIsComputerThinking(false);
-        return;
       }
 
       const moveIndex = priorityIndices.find((index) => board[index] === null);
