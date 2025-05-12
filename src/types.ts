@@ -1,11 +1,12 @@
-export type SquareValue = 'O' | 'X' | null;
-export type Winner = 'X' | 'O' | 'draw' | null;
+import {WINNING_LINES} from "./consts";
+
+export type SquareValue = "O" | "X" | null;
+export type Winner = "X" | "O" | "draw" | null;
+export type WinningLine = (typeof WINNING_LINES)[number] | null;
 
 export interface GameContextType {
   board: SquareValue[];
-  isXNext: boolean;
-  winner: Winner;
   isComputerThinking: boolean;
   handleMove: (index: number) => void;
-  resetGame: () => void;
+  winningLine: WinningLine;
 }

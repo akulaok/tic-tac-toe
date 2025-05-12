@@ -1,4 +1,35 @@
-.button{
+.button {
   background-color: transparent;
-  border-color: brown;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.animationWrapper {
+  width: 70%;
+  height: 70%;
+}
+
+.winning {
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+
+.gameEnd {
+  animation: blink 1.5s ease-in-out infinite;
 }

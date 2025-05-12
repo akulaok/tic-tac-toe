@@ -1,11 +1,11 @@
-import { WINNING_LINES } from "../consts";
-import { SquareValue, Winner } from "../types";
+import {WINNING_LINES} from "../consts";
+import {SquareValue, WinningLine} from "../types";
 
-  export function calculateWinner(squares: SquareValue[]): Winner {
-    for (const [a, b, c] of WINNING_LINES) {
-      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        return squares[a] as Winner;
-      }
+export function calculateWinner(squares: SquareValue[]): WinningLine {
+  for (const [a, b, c] of WINNING_LINES) {
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return [a, b, c];
     }
-    return squares.includes(null) ? null : "draw";
   }
+  return null;
+}

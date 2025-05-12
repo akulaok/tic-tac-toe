@@ -2,11 +2,9 @@ import {createContext, ReactNode} from "react";
 import {GameContextType} from "../types";
 export const GameContext = createContext<GameContextType>({
   board: Array(9).fill(null),
-  isXNext: true,
-  winner: null,
   isComputerThinking: false,
   handleMove: () => {},
-  resetGame: () => {},
+  winningLine: null,
 });
 
 export function GameProvider({

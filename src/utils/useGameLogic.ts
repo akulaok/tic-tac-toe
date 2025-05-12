@@ -1,18 +1,22 @@
-import { useEffect, useState } from "react";
-import { SquareValue, Winner } from "../types";
-import { COMPUTER_SYMBOL, PLAYER_SYMBOL } from "../consts";
-import { calculateWinner } from "../utils/calculateWinner";
+import {useEffect, useState} from "react";
+import {SquareValue, WinningLine} from "../types";
+import {COMPUTER_SYMBOL, PLAYER_SYMBOL, priorityIndices} from "../consts";
+import {calculateWinner} from "../utils/calculateWinner";
 
 export function useGameLogic() {
   const [board, setBoard] = useState<SquareValue[]>(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState(true);
-  const [winner, setWinner] = useState<Winner>(null);
+  const [winningLine, setWinningLine] = useState<WinningLine | null>(null);
   const [isComputerThinking, setIsComputerThinking] = useState(false);
+  const [isDraw, setIsDraw] = useState(false);
 
   const getEmptyIndices = () =>
-    board
-      .map((square, index) => (square === null ? index : null))
-      .filter((val) => val !== null) as number[];
+    board.reduce<number[]>((emptyIndices, square, index) => {
+      if (square === null) {
+        emptyIndices.push(index);
+      }
+      return emptyIndices;
+    }, []);
 
   const makeMove = (index: number, symbol: SquareValue) => {
     const newBoard = [...board];
@@ -26,11 +30,34 @@ export function useGameLogic() {
     for (const index of emptyIndices) {
       const testBoard = [...board];
       testBoard[index] = symbol;
-      if (calculateWinner(testBoard) === symbol) {
+      const winnerLine = calculateWinner(testBoard);
+      if (winnerLine && testBoard[winnerLine[0]] === symbol) {
         return index;
       }
     }
     return null;
+  };
+
+  const checkGameResult = (newBoard: SquareValue[]) => {
+    const winnerLine = calculateWinner(newBoard);
+    if (winnerLine) {
+      setWinningLine(winnerLine);
+      return true;
+    }
+    if (newBoard.every((cell) => cell !== null)) {
+      setIsDraw(true);
+      return true;
+    }
+    return false;
+  };
+
+  const handleMove = (index: number) => {
+    if (winningLine || board[index] || isComputerThinking || isDraw) return;
+
+    const newBoard = makeMove(index, PLAYER_SYMBOL);
+    if (!checkGameResult(newBoard)) {
+      setIsXNext(false);
+    }
   };
 
   const makeComputerMove = () => {
@@ -38,7 +65,6 @@ export function useGameLogic() {
 
     setTimeout(() => {
       const emptyIndices = getEmptyIndices();
-
       if (emptyIndices.length === 0) {
         setIsComputerThinking(false);
         return;
@@ -46,73 +72,56 @@ export function useGameLogic() {
 
       const winningMove = findWinningMove(COMPUTER_SYMBOL);
       if (winningMove !== null) {
-        makeMove(winningMove, COMPUTER_SYMBOL);
-        setWinner(COMPUTER_SYMBOL);
+        const newBoard = makeMove(winningMove, COMPUTER_SYMBOL);
+        checkGameResult(newBoard);
         setIsComputerThinking(false);
         return;
       }
 
-      if (Math.random() < 0.7) {
-        const blockingMove = findWinningMove(PLAYER_SYMBOL);
-        if (blockingMove !== null) {
-          makeMove(blockingMove, COMPUTER_SYMBOL);
-          setIsComputerThinking(false);
+      const blockingMove = findWinningMove(PLAYER_SYMBOL);
+      if (blockingMove !== null) {
+        const newBoard = makeMove(blockingMove, COMPUTER_SYMBOL);
+        if (!checkGameResult(newBoard)) {
           setIsXNext(true);
-          return;
+        }
+        setIsComputerThinking(false);
+        return;
+      }
+
+      const moveIndex = priorityIndices.find((index) => board[index] === null);
+      if (moveIndex !== undefined) {
+        const newBoard = makeMove(moveIndex, COMPUTER_SYMBOL);
+        if (!checkGameResult(newBoard)) {
+          setIsXNext(true);
         }
       }
-
-      const priorityIndices = [4, 0, 2, 6, 8, 1, 3, 5, 7];
-      const moveIndex = priorityIndices.find((index) => board[index] === null);
-
-      if (moveIndex !== undefined) {
-        makeMove(moveIndex, COMPUTER_SYMBOL);
-      }
-
       setIsComputerThinking(false);
-      setIsXNext(true);
     }, 500);
-  };
-
-  const handleMove = (index: number) => {
-    if (winner || board[index] || isComputerThinking) return;
-
-    const newBoard = makeMove(index, PLAYER_SYMBOL);
-    const newWinner = calculateWinner(newBoard);
-
-    if (newWinner) {
-      setWinner(newWinner);
-    } else {
-      setIsXNext(false);
-    }
   };
 
   const resetGame = () => {
     setBoard(Array(9).fill(null));
     setIsXNext(true);
-    setWinner(null);
+    setWinningLine(null);
     setIsComputerThinking(false);
+    setIsDraw(false);
   };
 
   useEffect(() => {
-    if (!isXNext && !winner && !isComputerThinking) {
+    if (winningLine || isDraw) {
+      const resetTimeout = setTimeout(resetGame, 3000);
+      return () => clearTimeout(resetTimeout);
+    }
+
+    if (!isXNext && !winningLine && !isComputerThinking && !isDraw) {
       makeComputerMove();
     }
-  }, [isXNext, winner, isComputerThinking]);
+  }, [isXNext, winningLine, isComputerThinking, isDraw]);
 
-    useEffect(() => {
-    if (winner) {
-      const resetTimeout = setTimeout(() => resetGame(), 2000); 
-      return () => clearTimeout(resetTimeout); 
-    }
-    }, [winner]);
-  
   return {
     board,
-    isXNext,
-    winner,
+    winningLine,
     isComputerThinking,
     handleMove,
-    resetGame,
   };
 }
